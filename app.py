@@ -1,24 +1,29 @@
 import streamlit as st
 import pandas as pd
-import nbformat
-from nbconvert import PythonExporter
+import zipfile
+import requests
+import io
 
-st.title("Prodigy InfoTech Task 5 - Data Analysis")
+st.title("📂 Load CSV from ZIP (GitHub)")
 
-st.write("### 📊 Data from Notebooks")
+# ✅ Replace with your actual GitHub file URL
+zip_url = "/Users/adityakumar/Downloads/US_Accidents_March23.csv.zip"
 
-# Load a CSV file (if your notebooks generate CSVs)
-try:
-    df = pd.read_csv("/Users/adityakumar/Downloads/US_Accidents_March23.csv")  # Replace with your actual data file
-    st.dataframe(df)  # Display the data
-except FileNotFoundError:
-    st.write("No data file found. Please check the file path.")
-
-st.write("### 📈 Visualization")
-st.line_chart(df)  # Example visualization
-
-st.write("### 💡 Insights")
-st.write("This app visualizes data analysis from Jupyter Notebooks.")
-
-st.write("### 🔍 Want More Features?")
-st.write("Modify `app.py` to add your own custom graphs and insights!")
+# Download ZIP file from GitHub
+response = requests.get(zip_url)
+if response.status_code == 200:
+    zip_file = io.BytesIO(response.content)  # Convert to file-like object
+    
+    # Extract ZIP file
+    with zipfile.ZipFile(zip_file, "r") as z:
+        csv_files = [f for f in z.namelist() if f.endswith(".csv")]
+        
+        if csv_files:
+            with z.open(csv_files[0]) as f:
+                df = pd.read_csv(f)
+                st.write("### ✅ Loaded Data:")
+                st.dataframe(df)
+        else:
+            st.error("⚠️ No CSV file found in the ZIP.")
+else:
+    st.error("⚠️ Failed to download ZIP file from GitHub.")
